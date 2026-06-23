@@ -1,44 +1,104 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
 body {
-    font-family: Arial, sans-serif;
     background: #f4f6f9;
-    padding: 20px;
+    color: #1e293b;
+    padding: 30px;
 }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    color:black;
+.dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 26px;
 }
 
-h3 {
-    background: white;
-    padding: 10px;
+.dash-header h1 {
+    color: #0f172a;
+    font-size: 26px;
+}
+
+.logout {
+    background: #0078d7;
+    color: #fff;
+    text-decoration: none;
+    padding: 9px 16px;
     border-radius: 8px;
-    margin: 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.logout:hover {
+    background: #0063b1;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-top: 4px solid #0078d7;
+}
+
+.stat-card.caught {
+    border-top-color: #ef4444;
+}
+
+.stat-card.safe {
+    border-top-color: #22c55e;
+}
+
+.stat-num {
+    display: block;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.stat-label {
+    color: #64748b;
+    font-size: 14px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
-    margin-top: 20px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 th {
     background: #0078d7;
-    color: white;
-    padding: 12px;
+    color: #fff;
+    padding: 14px;
+    text-align: left;
 }
 
 td {
-    padding: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.empty {
     text-align: center;
-}
-
-tr:nth-child(even) {
-    background: #f2f2f2;
-}
-
-table, th, td {
-    border: 1px solid #ddd;
+    color: #94a3b8;
+    padding: 24px;
 }

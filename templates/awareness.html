@@ -1,37 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Awareness Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Awareness</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+<body class="awareness">
+    <div class="background"></div>
 
-<body class ="awareness">
+    <div class="container">
+        <div class="alert-badge">⚠️ This was a phishing simulation</div>
 
-<div class="container">
-
-    <h1 class="title">⚡ Awareness Portal</h1>
-
-    <div class="card">
-
-        <h2>🚨 Stay Safe Online</h2>
-
-        <p>
-            Never share your username or password with anyone.  
-            Avoid clicking unknown spam links or fake login pages.
+        <h1 class="title">You just got phished.</h1>
+        <p class="lead">
+            That login page was <strong>not real</strong>. In a genuine attack,
+            the credentials you typed would now be in an attacker's hands.
+            Don't worry — this is a safe training exercise. Here's what to learn from it.
         </p>
-    <p class="white-text">  
-        <ul>
-            <li>✔ Don’t share OTP</li>
-            <li>✔ Check website before login</li>
-            <li>✔ Avoid phishing links</li>
-            <li>✔ Use strong password</li>
-        </ul>
-    </p>
-        
 
+        <div class="card-grid">
+            <div class="card">
+                <h2>🚩 How to spot a phishing page</h2>
+                <ul>
+                    <li>Check the URL carefully — attackers use look-alike domains.</li>
+                    <li>Look for HTTPS and a valid certificate, but don't trust it alone.</li>
+                    <li>Be suspicious of urgency ("verify now or lose access").</li>
+                    <li>Hover over links before clicking to see the real destination.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>✅ Stay safe</h2>
+                <ul>
+                    <li>Never share your password or OTP with anyone.</li>
+                    <li>Use a password manager and unique passwords.</li>
+                    <li>Enable multi-factor authentication (MFA).</li>
+                    <li>Report suspicious emails to your IT/security team.</li>
+                </ul>
+            </div>
+        </div>
+
+        <a class="home-link" href="{{ url_for('phishing_login') }}">← Back to start</a>
     </div>
-
-</div>
-
 </body>
 </html>

@@ -1,17 +1,39 @@
-<form action="/admin" method="POST">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background"></div>
 
-    <input type="text"
-           name="username"
-           placeholder="Admin Username"
-           required>
+    <div class="login-card">
+        <div class="logo">🔐</div>
+        <h1>Admin</h1>
+        <p class="subtitle">Awareness Dashboard Access</p>
 
-    <input type="password"
-           name="password"
-           placeholder="Password"
-           required>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
 
-    <button type="submit">
-        Login
-    </button>
+        <form action="{{ url_for('admin') }}" method="POST">
+            <input type="text" name="username" placeholder="Admin Username" required autofocus>
 
-</form>
+            <div class="password-box">
+                <input id="password" type="password" name="password" placeholder="Password" required>
+                <span class="eye" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="footer">Authorized personnel only</div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
