@@ -1,0 +1,22 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style1.css') }}">
+<h1>Admin Dashboard</h1>
+
+<h3>Total Members : {{ total_members }}</h3>
+<h3>Awareness Viewed : {{ viewed_count }}</h3>
+<h3>Not Viewed : {{ not_viewed }}</h3>
+
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>Date</th>
+        <th>Time</th>
+    </tr>
+
+    {% for user in users %}
+    <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.date }}</td>
+        <td>{{ user.time }}</td>
+    </tr>
+    {% endfor %}
+</table>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Employee Login</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<body>
+
+<div class="login-card">
+
+    <div class="logo"></div>
+
+    <h1> ZIMBRA </h1>
+
+    <p class="subtitle">
+        Login
+    </p>
+
+    <form action="/login" method="POST">
+     <input type="text" name="username" placeholder="Username" required>
+
+    
+
+    <div class="password-box">
+
+        <input
+            type ="password"
+            name ="password"
+            placeholder="Password"
+            required>
+
+        <span class="eye" onclick="togglePassword()">👁️</span>
+
+    </div>
+
+    <button type="submit">Login</button>
+
+</form>
+    <div class="footer">
+        Enterprise Security Suite v1.0
+    </div>
+
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>
