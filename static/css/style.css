@@ -94,6 +94,26 @@ button:hover {
     box-shadow: 0 0 25px #38bdf8;
 }
 
+.links {
+    margin-top: 18px;
+    font-size: 14px;
+}
+
+.links a {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.links a:hover {
+    text-decoration: underline;
+}
+
+.links span {
+    color: #475569;
+    margin: 0 8px;
+}
+
 .footer {
     margin-top: 18px;
     color: #94a3b8;

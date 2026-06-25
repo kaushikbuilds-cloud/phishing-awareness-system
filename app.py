@@ -21,29 +21,33 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "1234")
 
-TOTAL_MEMBERS = int(os.environ.get("TOTAL_MEMBERS", "10"))
-
 # ---------------------------------------------------------------------------
 # Storage
 # ---------------------------------------------------------------------------
-# We deliberately DO NOT store the submitted password.
+# DEMO / TRAINING ONLY: passwords are stored and shown in plaintext on the
+# admin dashboard because that is an explicit requirement of this awareness
+# project. A real production app must NEVER do this -- always hash passwords.
 #
-# Vercel runs this app "serverless": each request may be handled by a
-# different instance, so a plain in-memory list cannot be shared between the
-# user who clicks and the admin who views the dashboard.
+# Vercel runs this app "serverless": each request may hit a different
+# instance, so a plain in-memory store cannot be shared between the user and
+# the admin. When Vercel KV (Upstash Redis) is configured we persist data
+# there; otherwise we fall back to in-memory (local dev / always-on hosts).
 #
-# If Vercel KV (Upstash Redis) is configured, we persist clicks there so the
-# dashboard reliably shows every click. Otherwise we fall back to an in-memory
-# list (fine for local testing and always-on hosts like Render/Railway).
+#   users    -> Redis hash:  username -> {username, password, date, time}
+#   attempts -> Redis list:  every login attempt (correct or wrong)
 # ---------------------------------------------------------------------------
 KV_URL = os.environ.get("KV_REST_API_URL")
 KV_TOKEN = os.environ.get("KV_REST_API_TOKEN")
-KV_KEY = "caught_users"
+KV_ENABLED = bool(KV_URL and KV_TOKEN)
 
-_memory_users = []
+USERS_KEY = "users"
+ATTEMPTS_KEY = "attempts"
+
+_mem_users = {}
+_mem_attempts = []
 
 
-def _kv_command(command):
+def _kv(command):
     req = urllib.request.Request(
         KV_URL,
         data=json.dumps(command).encode(),
@@ -57,31 +61,70 @@ def _kv_command(command):
         return json.loads(resp.read().decode()).get("result")
 
 
-def load_users():
-    """Return all recorded clicks, newest last."""
-    if KV_URL and KV_TOKEN:
+# ---- registered users -----------------------------------------------------
+def users_all():
+    if KV_ENABLED:
         try:
-            raw = _kv_command(["LRANGE", KV_KEY, 0, -1]) or []
-            return [json.loads(item) for item in raw]
+            flat = _kv(["HGETALL", USERS_KEY]) or []
+            return {
+                flat[i]: json.loads(flat[i + 1]) for i in range(0, len(flat), 2)
+            }
         except Exception:
-            return []
-    return list(_memory_users)
+            return {}
+    return dict(_mem_users)
 
 
-def add_user(record):
-    """Record a click once per username."""
-    existing = load_users()
-    if any(u["username"] == record["username"] for u in existing):
-        return
-
-    if KV_URL and KV_TOKEN:
+def user_get(username):
+    if KV_ENABLED:
         try:
-            _kv_command(["RPUSH", KV_KEY, json.dumps(record)])
+            value = _kv(["HGET", USERS_KEY, username])
+            return json.loads(value) if value else None
+        except Exception:
+            return None
+    return _mem_users.get(username)
+
+
+def user_set(username, record):
+    if KV_ENABLED:
+        try:
+            _kv(["HSET", USERS_KEY, username, json.dumps(record)])
         except Exception:
             pass
         return
+    _mem_users[username] = record
 
-    _memory_users.append(record)
+
+# ---- login attempts -------------------------------------------------------
+def attempts_all():
+    if KV_ENABLED:
+        try:
+            raw = _kv(["LRANGE", ATTEMPTS_KEY, 0, -1]) or []
+            return [json.loads(item) for item in raw]
+        except Exception:
+            return []
+    return list(_mem_attempts)
+
+
+def attempt_add(record):
+    if KV_ENABLED:
+        try:
+            _kv(["RPUSH", ATTEMPTS_KEY, json.dumps(record)])
+        except Exception:
+            pass
+        return
+    _mem_attempts.append(record)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+def now_parts():
+    now = datetime.now()
+    return now.strftime("%d-%m-%Y"), now.strftime("%I:%M %p")
+
+
+def client_ip():
+    return request.headers.get("X-Forwarded-For", request.remote_addr)
 
 
 def is_admin(username, password):
@@ -98,22 +141,37 @@ def login_required(view):
     return wrapped
 
 
-def record_catch(username):
-    """Log that a user submitted the fake login (once per username)."""
-    now = datetime.now()
-    add_user(
-        {
-            "username": username,
-            "date": now.strftime("%d-%m-%Y"),
-            "time": now.strftime("%I:%M %p"),
-            "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
-        }
-    )
-
-
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 @app.route("/")
-def phishing_login():
-    return render_template("phishing_login.html")
+def home():
+    return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+
+        if not username or not password:
+            flash("Please enter both a username and a password.")
+            return redirect(url_for("register"))
+
+        if user_get(username):
+            flash("That username already exists. Please log in.")
+            return redirect(url_for("home"))
+
+        date, time = now_parts()
+        user_set(
+            username,
+            {"username": username, "password": password, "date": date, "time": time},
+        )
+        flash("Account created successfully! Please log in.")
+        return redirect(url_for("home"))
+
+    return render_template("register.html")
 
 
 @app.route("/login", methods=["POST"])
@@ -121,15 +179,54 @@ def login():
     username = (request.form.get("username") or "").strip()
     password = request.form.get("password") or ""
 
-    # Admins skip the awareness flow and go straight to the dashboard.
+    # Admin shortcut -> dashboard.
     if is_admin(username, password):
         session["admin"] = True
         return redirect(url_for("dashboard"))
 
-    if username:
-        record_catch(username)
+    user = user_get(username)
+    correct = bool(user and user.get("password") == password)
 
-    return redirect(url_for("awareness"))
+    date, time = now_parts()
+    attempt_add(
+        {
+            "username": username,
+            "password": password,
+            "result": "Correct" if correct else "Wrong",
+            "date": date,
+            "time": time,
+            "ip": client_ip(),
+        }
+    )
+
+    if correct:
+        return redirect(url_for("awareness"))
+
+    flash("Invalid username or password.")
+    return redirect(url_for("home"))
+
+
+@app.route("/forgot", methods=["GET", "POST"])
+def forgot():
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+
+        user = user_get(username)
+        if not user:
+            flash("No account found with that username.")
+            return redirect(url_for("forgot"))
+
+        if not password:
+            flash("Please enter a new password.")
+            return redirect(url_for("forgot"))
+
+        user["password"] = password
+        user_set(username, user)
+        flash("Password updated successfully! Please log in.")
+        return redirect(url_for("home"))
+
+    return render_template("forgot.html")
 
 
 @app.route("/awareness")
@@ -162,16 +259,17 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    users = load_users()
-    viewed_count = len(users)
-    not_viewed = max(TOTAL_MEMBERS - viewed_count, 0)
+    users = list(users_all().values())
+    attempts = attempts_all()
 
     return render_template(
         "dashboard.html",
         users=users,
-        total_members=TOTAL_MEMBERS,
-        viewed_count=viewed_count,
-        not_viewed=not_viewed,
+        attempts=attempts,
+        total_users=len(users),
+        total_attempts=len(attempts),
+        correct_count=sum(1 for a in attempts if a.get("result") == "Correct"),
+        wrong_count=sum(1 for a in attempts if a.get("result") == "Wrong"),
     )
 
 

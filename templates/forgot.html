@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password — Zimbra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background"></div>
+
+    <div class="login-card">
+        <div class="logo">🔑</div>
+        <h1>Reset Password</h1>
+        <p class="subtitle">Enter your username and a new password</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('forgot') }}" method="POST">
+            <input type="text" name="username" placeholder="Your username" required autofocus>
+
+            <div class="password-box">
+                <input id="password" type="password" name="password" placeholder="New password" required>
+                <span class="eye" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <button type="submit">Update Password</button>
+        </form>
+
+        <div class="links">
+            <a href="{{ url_for('home') }}">← Back to login</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

